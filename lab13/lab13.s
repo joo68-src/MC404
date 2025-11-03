@@ -1,6 +1,6 @@
 data:
 buffer1: .space 3000
-command_buffer: .space 3000
+command_buffer: .space 2
 
 text:
 .set BASE_ADRESS, 0xFFFF0100
@@ -9,14 +9,16 @@ text:
 _start:
     la a1, command_buffer
     li a2, 2
-    jal ra, read
+    jal ra, read                # le o comando e guarda num buffer dedicado
 
     la a0, command_buffer
-    jal ra, check_command
+    jal ra, check_command       # checa comando dado
 
+    la a0, buffer1
+    jal ra, count_char          # conta caracteres da string para imprimir
     la a1, buffer1
-    li a2, 8
-    jal ra, write
+    mv a2, a0
+    jal ra, write               # imprime nova string
 
     j exit
 
@@ -52,25 +54,6 @@ check_command:
     beq t0, t1, algebraic_expression
 
     j restore_and_ret           # restaura ra e retorna
-
-read_string:                    # prepara loop para ler
-    addi sp, sp, -4
-    sw ra, 0(sp)            
-    mv t0, a0
-    addi t0, t0, -1
-    li t1, '\n'                 # comparador
-read_string_loop:               # loop que le um byte por vez ate que seja atingido newline
-    addi t0, t0, 1
-    mv a1, t0
-    li a2, 1
-    jal ra, read
-    lb t2, 0(t0)
-    bne t2, t1, read_string_loop
-read_string_final:              # retorna 
-    la a0, buffer1
-    lw ra, 0(sp)
-    addi sp, sp, 4
-    ret
 
 prepare_invert:
     jal ra, invert
@@ -132,6 +115,25 @@ count_loop:
     
 restore_and_ret:
     lw ra, (sp)
+    addi sp, sp, 4
+    ret
+
+read_string:                    # prepara loop para ler
+    addi sp, sp, -4
+    sw ra, 0(sp)            
+    mv t0, a0
+    addi t0, t0, -1
+    li t1, '\n'                 # comparador
+read_string_loop:               # loop que le um byte por vez ate que seja atingido newline
+    addi t0, t0, 1
+    mv a1, t0
+    li a2, 1
+    jal ra, read
+    lb t2, 0(t0)
+    bne t2, t1, read_string_loop
+read_string_final:              # retorna 
+    la a0, buffer1
+    lw ra, 0(sp)
     addi sp, sp, 4
     ret
 
